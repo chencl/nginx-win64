@@ -33,8 +33,8 @@ static ngx_inline ngx_int_t ngx_http_spdy_filter_send(
     ngx_connection_t *fc, ngx_http_spdy_stream_t *stream);
 
 static ngx_http_spdy_out_frame_t *ngx_http_spdy_filter_get_data_frame(
-    ngx_http_spdy_stream_t *stream, size_t len, ngx_uint_t flags,
-    ngx_chain_t *first, ngx_chain_t *last);
+    ngx_http_spdy_stream_t *stream, size_t len, ngx_chain_t *first,
+    ngx_chain_t *last);
 
 static ngx_int_t ngx_http_spdy_syn_frame_handler(
     ngx_http_spdy_connection_t *sc, ngx_http_spdy_out_frame_t *frame);
@@ -618,7 +618,7 @@ ngx_http_spdy_body_filter(ngx_http_request_t *r, ngx_chain_t *in)
 {
     off_t                       size;
     ngx_buf_t                  *b;
-    ngx_chain_t                *cl, *ll, *out, **ln;
+    ngx_chain_t                *cl, *out, **ln;
     ngx_http_spdy_stream_t     *stream;
     ngx_http_spdy_out_frame_t  *frame;
 
@@ -644,10 +644,9 @@ ngx_http_spdy_body_filter(ngx_http_request_t *r, ngx_chain_t *in)
 
     size = 0;
     ln = &out;
-    ll = in;
 
-    for ( ;; ) {
-        b = ll->buf;
+    do {
+        b = in->buf;
 #if 1
         if (ngx_buf_size(b) == 0 && !ngx_buf_special(b)) {
             ngx_log_error(NGX_LOG_ALERT, r->connection->log, 0,
@@ -678,12 +677,9 @@ ngx_http_spdy_body_filter(ngx_http_request_t *r, ngx_chain_t *in)
         *ln = cl;
         ln = &cl->next;
 
-        if (ll->next == NULL) {
-            break;
-        }
+        in = in->next;
 
-        ll = ll->next;
-    }
+    } while (in);
 
     if (size > NGX_SPDY_MAX_FRAME_SIZE) {
         ngx_log_error(NGX_LOG_ALERT, r->connection->log, 0,
@@ -692,7 +688,7 @@ ngx_http_spdy_body_filter(ngx_http_request_t *r, ngx_chain_t *in)
     }
 
     frame = ngx_http_spdy_filter_get_data_frame(stream, (size_t) size,
-                                                b->last_buf, out, cl);
+                                                out, cl);
     if (frame == NULL) {
         return NGX_ERROR;
     }
@@ -709,7 +705,7 @@ ngx_http_spdy_body_filter(ngx_http_request_t *r, ngx_chain_t *in)
 
 static ngx_http_spdy_out_frame_t *
 ngx_http_spdy_filter_get_data_frame(ngx_http_spdy_stream_t *stream,
-    size_t len, ngx_uint_t fin, ngx_chain_t *first, ngx_chain_t *last)
+    size_t len, ngx_chain_t *first, ngx_chain_t *last)
 {
     u_char                     *p;
     ngx_buf_t                  *buf;
@@ -731,13 +727,13 @@ ngx_http_spdy_filter_get_data_frame(ngx_http_spdy_stream_t *stream,
         }
     }
 
+    flags = last->buf->last_buf ? NGX_SPDY_FLAG_FIN : 0;
+
     ngx_log_debug4(NGX_LOG_DEBUG_HTTP, stream->request->connection->log, 0,
-                   "spdy:%ui create DATA frame %p: len:%uz fin:%ui",
-                   stream->id, frame, len, fin);
+                   "spdy:%ui create DATA frame %p: len:%uz flags:%ui",
+                   stream->id, frame, len, flags);
 
-    if (len || fin) {
-
-        flags = fin ? NGX_SPDY_FLAG_FIN : 0;
+    if (len || flags) {
 
         cl = ngx_chain_get_free_buf(stream->request->pool,
                                     &stream->free_data_headers);
@@ -751,7 +747,7 @@ ngx_http_spdy_filter_get_data_frame(ngx_http_spdy_stream_t *stream,
             p = buf->start;
             buf->pos = p;
 
-            p += sizeof(uint32_t);
+            p += NGX_SPDY_SID_SIZE;
 
             (void) ngx_spdy_frame_write_flags_and_len(p, flags, len);
 
@@ -786,7 +782,7 @@ ngx_http_spdy_filter_get_data_frame(ngx_http_spdy_stream_t *stream,
     frame->size = NGX_SPDY_FRAME_HEADER_SIZE + len;
     frame->priority = stream->priority;
     frame->blocked = 0;
-    frame->fin = fin;
+    frame->fin = last->buf->last_buf;
 
     return frame;
 }
@@ -795,10 +791,14 @@ ngx_http_spdy_filter_get_data_frame(ngx_http_spdy_stream_t *stream,
 static ngx_inline ngx_int_t
 ngx_http_spdy_filter_send(ngx_connection_t *fc, ngx_http_spdy_stream_t *stream)
 {
+    stream->blocked = 1;
+
     if (ngx_http_spdy_send_output_queue(stream->connection) == NGX_ERROR) {
         fc->error = 1;
         return NGX_ERROR;
     }
+
+    stream->blocked = 0;
 
     if (stream->waiting) {
         fc->buffered |= NGX_SPDY_WRITE_BUFFERED;
@@ -946,16 +946,14 @@ ngx_http_spdy_handle_stream(ngx_http_spdy_connection_t *sc,
 
     fc->write->delayed = 0;
 
-    if (stream->handled) {
+    if (stream->handled || stream->blocked) {
         return;
     }
 
-    if (sc->blocked == 2) {
-        stream->handled = 1;
+    stream->handled = 1;
 
-        stream->next = sc->last_stream;
-        sc->last_stream = stream;
-    }
+    stream->next = sc->last_stream;
+    sc->last_stream = stream;
 }
 
 
