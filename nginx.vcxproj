@@ -127,7 +127,7 @@
       <EnableCOMDATFolding>true</EnableCOMDATFolding>
       <OptimizeReferences>true</OptimizeReferences>
       <AdditionalLibraryDirectories>D:\opensrc\_lib64;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
-      <AdditionalDependencies>libeay32.lib;ssleay32.lib;libgd.lib;libGeoIP.lib;libIconv.lib;libxml2.lib;libxslt.lib;libexslt.lib;pcre.lib;zdll.lib;ws2_32.lib;perl516.lib;libtcmalloc_minimal.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalDependencies>libeay32.lib;ssleay32.lib;libgd.lib;libGeoIP.lib;libxml2.lib;libxslt.lib;libexslt.lib;pcre.lib;zdll.lib;ws2_32.lib;perl516.lib;libtcmalloc_minimal.lib;%(AdditionalDependencies)</AdditionalDependencies>
       <ShowProgress>LinkVerboseLib</ShowProgress>
       <ForceSymbolReferences>__tcmalloc</ForceSymbolReferences>
     </Link>
