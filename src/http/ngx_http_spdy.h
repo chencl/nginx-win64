@@ -107,7 +107,7 @@ struct ngx_http_spdy_connection_s {
     ngx_uint_t                       last_sid;
 
     unsigned                         blocked:1;
-    unsigned                         waiting:1; /* FIXME better name */
+    unsigned                         incomplete:1;
 };
 
 
@@ -119,9 +119,11 @@ struct ngx_http_spdy_stream_s {
     ngx_http_spdy_stream_t          *next;
 
     ngx_uint_t                       header_buffers;
-    ngx_uint_t                       waiting;
+    ngx_uint_t                       queued;
+
     ngx_http_spdy_out_frame_t       *free_frames;
     ngx_chain_t                     *free_data_headers;
+    ngx_chain_t                     *free_bufs;
 
     unsigned                         priority:2;
     unsigned                         handled:1;
