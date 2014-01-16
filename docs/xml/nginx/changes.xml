@@ -5,6 +5,337 @@
 <change_log title="nginx">
 
 
+<changes ver="1.5.11" date="04.03.2014">
+
+<change type="security">
+<para lang="ru">
+при обработке специально созданного запроса модулем ngx_http_spdy_module
+на 32-битных платформах могла повреждаться память рабочего процесса,
+что потенциально могло приводить к выполнению произвольного кода
+(CVE-2014-0088);
+ошибка появилась в 1.5.10.<br/>
+Спасибо Lucas Molas из Programa STIC, Fundación Dr. Manuel
+Sadosky, Buenos Aires, Argentina.
+</para>
+<para lang="en">
+memory corruption might occur in a worker process on 32-bit platforms
+while handling a specially crafted request by ngx_http_spdy_module,
+potentially resulting in arbitrary code execution (CVE-2014-0088);
+the bug had appeared in 1.5.10.<br/>
+Thanks to Lucas Molas, researcher at Programa STIC, Fundación Dr. Manuel
+Sadosky, Buenos Aires, Argentina.
+</para>
+</change>
+
+<change type="feature">
+<para lang="ru">
+переменная $ssl_session_reused.
+</para>
+<para lang="en">
+the $ssl_session_reused variable.
+</para>
+</change>
+
+<change type="bugfix">
+<para lang="ru">
+директива client_max_body_size могла не работать
+при чтении тела запроса с использованием chunked transfer encoding;
+ошибка появилась в 1.3.9.<br/>
+Спасибо Lucas Molas.
+</para>
+<para lang="en">
+the "client_max_body_size" directive might not work
+when reading a request body using chunked transfer encoding;
+the bug had appeared in 1.3.9.<br/>
+Thanks to Lucas Molas.
+</para>
+</change>
+
+<change type="bugfix">
+<para lang="ru">
+при проксировании WebSocket-соединений
+в рабочем процессе мог произойти segmentation fault.
+</para>
+<para lang="en">
+a segmentation fault might occur in a worker process
+when proxying WebSocket connections.
+</para>
+</change>
+
+<change type="bugfix">
+<para lang="ru">
+в рабочем процессе мог произойти segmentation fault,
+если использовался модуль ngx_http_spdy_module на 32-битных платформах;
+ошибка появилась в 1.5.10.
+</para>
+<para lang="en">
+a segmentation fault might occur in a worker process
+if the ngx_http_spdy_module was used on 32-bit platforms;
+the bug had appeared in 1.5.10.
+</para>
+</change>
+
+<change type="bugfix">
+<para lang="ru">
+значение переменной $upstream_status могло быть неверным,
+если использовались директивы proxy_cache_use_stale
+или proxy_cache_revalidate.<br/>
+Спасибо Piotr Sikora.
+</para>
+<para lang="en">
+the $upstream_status variable might contain wrong data
+if the "proxy_cache_use_stale" or "proxy_cache_revalidate" directives
+were used.<br/>
+Thanks to Piotr Sikora.
+</para>
+</change>
+
+<change type="bugfix">
+<para lang="ru">
+в рабочем процессе мог произойти segmentation fault,
+если ошибки с кодом 400 с помощью директивы error_page
+перенаправлялись в именованный location.
+</para>
+<para lang="en">
+a segmentation fault might occur in a worker process
+if errors with code 400 were redirected to a named location
+using the "error_page" directive.
+</para>
+</change>
+
+<change type="bugfix">
+<para lang="ru">
+nginx/Windows не собирался с Visual Studio 2013.
+</para>
+<para lang="en">
+nginx/Windows could not be built with Visual Studio 2013.
+</para>
+</change>
+
+</changes>
+
+
+<changes ver="1.5.10" date="04.02.2014">
+
+<change type="feature">
+<para lang="ru">
+модуль ngx_http_spdy_module теперь использует протокол SPDY 3.1.<br/>
+Спасибо Automattic и MaxCDN за спонсирование разработки.
+</para>
+<para lang="en">
+the ngx_http_spdy_module now uses SPDY 3.1 protocol.<br/>
+Thanks to Automattic and MaxCDN for sponsoring this work.
+</para>
+</change>
+
+<change type="feature">
+<para lang="ru">
+модуль ngx_http_mp4_module теперь пропускает дорожки,
+имеющие меньшую длину, чем запрошенная перемотка.
+</para>
+<para lang="en">
+the ngx_http_mp4_module now skips tracks
+too short for a seek requested.
+</para>
+</change>
+
+<change type="bugfix">
+<para lang="ru">
+в рабочем процессе мог произойти segmentation fault,
+если переменная $ssl_session_id использовалась при логгировании;
+ошибка появилась в 1.5.9.
+</para>
+<para lang="en">
+a segmentation fault might occur in a worker process
+if the $ssl_session_id variable was used in logs;
+the bug had appeared in 1.5.9.
+</para>
+</change>
+
+<change type="bugfix">
+<para lang="ru">
+переменные $date_local и $date_gmt использовали неверный формат
+вне модуля ngx_http_ssi_filter_module.
+</para>
+<para lang="en">
+the $date_local and $date_gmt variables used wrong format
+outside of the ngx_http_ssi_filter_module.
+</para>
+</change>
+
+<change type="bugfix">
+<para lang="ru">
+клиентские соединения могли сразу закрываться,
+если использовался отложенный accept;
+ошибка появилась в 1.3.15.
+</para>
+<para lang="en">
+client connections might be immediately closed
+if deferred accept was used;
+the bug had appeared in 1.3.15.
+</para>
+</change>
+
+<change type="bugfix">
+<para lang="ru">
+сообщения "getsockopt(TCP_FASTOPEN) ... failed" записывались в лог
+в процессе обновления исполняемого файла на Linux;
+ошибка появилась в 1.5.8.<br/>
+Спасибо Piotr Sikora.
+</para>
+<para lang="en">
+alerts "getsockopt(TCP_FASTOPEN) ... failed" appeared in logs
+during binary upgrade on Linux;
+the bug had appeared in 1.5.8.<br/>
+Thanks to Piotr Sikora.
+</para>
+</change>
+
+</changes>
+
+
+<changes ver="1.5.9" date="22.01.2014">
+
+<change type="change">
+<para lang="ru">
+теперь в заголовке X-Accel-Redirect nginx ожидает закодированный URI.
+</para>
+<para lang="en">
+now nginx expects escaped URIs in "X-Accel-Redirect" headers.
+</para>
+</change>
+
+<change type="feature">
+<para lang="ru">
+директива ssl_buffer_size.
+</para>
+<para lang="en">
+the "ssl_buffer_size" directive.
+</para>
+</change>
+
+<change type="feature">
+<para lang="ru">
+директиву limit_rate теперь можно использовать для
+ограничения скорости передачи ответов клиенту в SPDY-соединениях.
+</para>
+<para lang="en">
+the "limit_rate" directive can now be used to
+rate limit responses sent in SPDY connections.
+</para>
+</change>
+
+<change type="feature">
+<para lang="ru">
+директива spdy_chunk_size.
+</para>
+<para lang="en">
+the "spdy_chunk_size" directive.
+</para>
+</change>
+
+<change type="feature">
+<para lang="ru">
+директива ssl_session_tickets.<br/>
+Спасибо Dirkjan Bussink.
+</para>
+<para lang="en">
+the "ssl_session_tickets" directive.<br/>
+Thanks to Dirkjan Bussink.
+</para>
+</change>
+
+<change type="bugfix">
+<para lang="ru">
+переменная $ssl_session_id содержала всю сессию в сериализованном виде
+вместо её идентификатора.<br/>
+Спасибо Ivan Ristić.
+</para>
+<para lang="en">
+the $ssl_session_id variable contained full session serialized
+instead of just a session id.<br/>
+Thanks to Ivan Ristić.
+</para>
+</change>
+
+<change type="bugfix">
+<para lang="ru">
+nginx неправильно обрабатывал закодированный символ "?" в команде SSI include.
+</para>
+<para lang="en">
+nginx incorrectly handled escaped "?" character in the "include" SSI command.
+</para>
+</change>
+
+<change type="bugfix">
+<para lang="ru">
+модуль ngx_http_dav_module не раскодировал целевой URI при 
+обработке методов COPY и MOVE.
+</para>
+<para lang="en">
+the ngx_http_dav_module did not unescape destination URI
+of the COPY and MOVE methods.
+</para>
+</change>
+
+<change type="bugfix">
+<para lang="ru">
+resolver не понимал доменные имена с точкой в конце.
+Спасибо Yichun Zhang.
+</para>
+<para lang="en">
+resolver did not understand domain names with a trailing dot.
+Thanks to Yichun Zhang.
+</para>
+</change>
+
+<change type="bugfix">
+<para lang="ru">
+при проксировании в логах могли появляться сообщения "zero size buf in output";
+ошибка появилась в 1.3.9.
+</para>
+<para lang="en">
+alerts "zero size buf in output" might appear in logs while proxying;
+the bug had appeared in 1.3.9.
+</para>
+</change>
+
+<change type="bugfix">
+<para lang="ru">
+в рабочем процессе мог произойти segmentation fault,
+если использовался модуль ngx_http_spdy_module.
+</para>
+<para lang="en">
+a segmentation fault might occur in a worker process
+if the ngx_http_spdy_module was used.
+</para>
+</change>
+
+<change type="bugfix">
+<para lang="ru">
+при использовании методов обработки соединений select, poll и /dev/poll
+проксируемые WebSocket-соединения могли зависать сразу после открытия.
+</para>
+<para lang="en">
+proxied WebSocket connections might hang right after handshake
+if the select, poll, or /dev/poll methods were used.
+</para>
+</change>
+
+<change type="bugfix">
+<para lang="ru">
+директива xclient почтового прокси-сервера
+некорректно передавала IPv6-адреса.
+</para>
+<para lang="en">
+the "xclient" directive of the mail proxy module
+incorrectly handled IPv6 client addresses.
+</para>
+</change>
+
+</changes>
+
+
 <changes ver="1.5.8" date="17.12.2013">
 
 <change type="feature">
@@ -9174,7 +9505,7 @@ Thanks to Maxim Dounin.
 
 <change type="bugfix">
 <para lang="ru">
-при проксировании SMPT nginx выдавал сообщение
+при проксировании SMTP nginx выдавал сообщение
 <nobr>"250 2.0.0 OK"</nobr> вместо "235 2.0.0 OK";
 ошибка появилась в 0.7.22.<br/>
 Спасибо Максиму Дунину.

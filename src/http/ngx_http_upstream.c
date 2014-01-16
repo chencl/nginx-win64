@@ -612,7 +612,7 @@ ngx_http_upstream_init_request(ngx_http_request_t *r)
             if (uscf->host.len == host->len
                 && ((uscf->port == 0 && u->resolved->no_port)
                      || uscf->port == u->resolved->port)
-                && ngx_memcmp(uscf->host.data, host->data, host->len) == 0)
+                && ngx_strncasecmp(uscf->host.data, host->data, host->len) == 0)
             {
                 goto found;
             }
@@ -715,7 +715,7 @@ ngx_http_upstream_cache(ngx_http_request_t *r, ngx_http_upstream_t *u)
         if (r->cache->header_start + 256 >= u->conf->buffer_size) {
             ngx_log_error(NGX_LOG_ERR, r->connection->log, 0,
                           "%V_buffer_size %uz is not enough for cache key, "
-                          "it should increased at least to %uz",
+                          "it should be increased to at least %uz",
                           &u->conf->module, u->conf->buffer_size,
                           ngx_align(r->cache->header_start + 256, 1024));
 
@@ -1096,7 +1096,7 @@ ngx_http_upstream_check_broken_connection(ngx_http_request_t *r,
         if (getsockopt(c->fd, SOL_SOCKET, SO_ERROR, (void *) &err, &len)
             == -1)
         {
-            err = ngx_errno;
+            err = ngx_socket_errno;
         }
 
         if (err) {
@@ -1977,7 +1977,7 @@ ngx_http_upstream_test_connect(ngx_connection_t *c)
         if (getsockopt(c->fd, SOL_SOCKET, SO_ERROR, (void *) &err, &len)
             == -1)
         {
-            err = ngx_errno;
+            err = ngx_socket_errno;
         }
 
         if (err) {
@@ -2557,14 +2557,12 @@ ngx_http_upstream_upgrade(ngx_http_request_t *r, ngx_http_upstream_t *u)
     if (u->peer.connection->read->ready
         || u->buffer.pos != u->buffer.last)
     {
+        ngx_post_event(c->read, &ngx_posted_events);
         ngx_http_upstream_process_upgraded(r, 1, 1);
+        return;
     }
 
-    if (c->read->ready
-        || r->header_in->pos != r->header_in->last)
-    {
-        ngx_http_upstream_process_upgraded(r, 0, 1);
-    }
+    ngx_http_upstream_process_upgraded(r, 0, 1);
 }
 
 
