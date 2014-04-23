@@ -2368,7 +2368,7 @@ equal:
 }
 
 
-ngx_uint_t
+static ngx_uint_t
 ngx_http_gzip_quantity(u_char *p, u_char *last)
 {
     u_char      c;
@@ -3710,8 +3710,7 @@ ngx_http_core_merge_loc_conf(ngx_conf_t *cf, void *parent, void *child)
                               prev->types_hash_max_size, 10240);
 
     ngx_conf_merge_uint_value(conf->types_hash_bucket_size,
-                              prev->types_hash_bucket_size,
-                              ngx_cacheline_size);
+                              prev->types_hash_bucket_size, 64);
 
     conf->types_hash_bucket_size = ngx_align(conf->types_hash_bucket_size,
                                              ngx_cacheline_size);
