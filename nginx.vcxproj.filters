@@ -109,9 +109,6 @@
     <None Include="src\os\unix\ngx_sunpro_x86.il">
       <Filter>Source Files\os\unix</Filter>
     </None>
-    <None Include="src\os\unix\rfork_thread.S">
-      <Filter>Source Files\os\unix</Filter>
-    </None>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="src\core\nginx.c">
@@ -213,16 +210,10 @@
     <ClCompile Include="src\event\ngx_event_acceptex.c">
       <Filter>Source Files\event</Filter>
     </ClCompile>
-    <ClCompile Include="src\event\ngx_event_busy_lock.c">
-      <Filter>Source Files\event</Filter>
-    </ClCompile>
     <ClCompile Include="src\event\ngx_event_connect.c">
       <Filter>Source Files\event</Filter>
     </ClCompile>
     <ClCompile Include="src\event\ngx_event_connectex.c">
-      <Filter>Source Files\event</Filter>
-    </ClCompile>
-    <ClCompile Include="src\event\ngx_event_mutex.c">
       <Filter>Source Files\event</Filter>
     </ClCompile>
     <ClCompile Include="src\event\ngx_event_openssl.c">
@@ -271,9 +262,6 @@
       <Filter>Source Files\event\modules</Filter>
     </ClCompile>
     <ClCompile Include="src\http\ngx_http.c">
-      <Filter>Source Files\http</Filter>
-    </ClCompile>
-    <ClCompile Include="src\http\ngx_http_busy_lock.c">
       <Filter>Source Files\http</Filter>
     </ClCompile>
     <ClCompile Include="src\http\ngx_http_copy_filter_module.c">
@@ -627,9 +615,6 @@
     <ClCompile Include="src\os\unix\ngx_freebsd_init.c">
       <Filter>Source Files\os\unix</Filter>
     </ClCompile>
-    <ClCompile Include="src\os\unix\ngx_freebsd_rfork_thread.c">
-      <Filter>Source Files\os\unix</Filter>
-    </ClCompile>
     <ClCompile Include="src\os\unix\ngx_freebsd_sendfile_chain.c">
       <Filter>Source Files\os\unix</Filter>
     </ClCompile>
@@ -649,9 +634,6 @@
       <Filter>Source Files\os\unix</Filter>
     </ClCompile>
     <ClCompile Include="src\os\unix\ngx_process_cycle.c">
-      <Filter>Source Files\os\unix</Filter>
-    </ClCompile>
-    <ClCompile Include="src\os\unix\ngx_pthread_thread.c">
       <Filter>Source Files\os\unix</Filter>
     </ClCompile>
     <ClCompile Include="src\os\unix\ngx_readv_chain.c">
@@ -694,6 +676,27 @@
       <Filter>Source Files\os\unix</Filter>
     </ClCompile>
     <ClCompile Include="src\os\unix\ngx_channel.c">
+      <Filter>Source Files\os\unix</Filter>
+    </ClCompile>
+    <ClCompile Include="src\core\ngx_proxy_protocol.c">
+      <Filter>Source Files\core</Filter>
+    </ClCompile>
+    <ClCompile Include="src\core\ngx_syslog.c">
+      <Filter>Source Files\core</Filter>
+    </ClCompile>
+    <ClCompile Include="src\core\ngx_thread_pool.c">
+      <Filter>Source Files\core</Filter>
+    </ClCompile>
+    <ClCompile Include="src\http\modules\ngx_http_upstream_hash_module.c">
+      <Filter>Source Files\http\modules</Filter>
+    </ClCompile>
+    <ClCompile Include="src\os\unix\ngx_thread_cond.c">
+      <Filter>Source Files\os\unix</Filter>
+    </ClCompile>
+    <ClCompile Include="src\os\unix\ngx_thread_id.c">
+      <Filter>Source Files\os\unix</Filter>
+    </ClCompile>
+    <ClCompile Include="src\os\unix\ngx_thread_mutex.c">
       <Filter>Source Files\os\unix</Filter>
     </ClCompile>
   </ItemGroup>
@@ -816,9 +819,6 @@
       <Filter>Header Files\event\modules</Filter>
     </ClInclude>
     <ClInclude Include="src\http\ngx_http.h">
-      <Filter>Header Files\http</Filter>
-    </ClInclude>
-    <ClInclude Include="src\http\ngx_http_busy_lock.h">
       <Filter>Header Files\http</Filter>
     </ClInclude>
     <ClInclude Include="src\http\ngx_http_cache.h">
@@ -950,9 +950,6 @@
     <ClInclude Include="src\os\unix\ngx_freebsd_config.h">
       <Filter>Header Files\os\unix</Filter>
     </ClInclude>
-    <ClInclude Include="src\os\unix\ngx_freebsd_rfork_thread.h">
-      <Filter>Header Files\os\unix</Filter>
-    </ClInclude>
     <ClInclude Include="src\os\unix\ngx_gcc_atomic_ppc.h">
       <Filter>Header Files\os\unix</Filter>
     </ClInclude>
@@ -1015,6 +1012,9 @@
     </ClInclude>
     <ClInclude Include="src\os\unix\ngx_sunpro_atomic_sparc64.h">
       <Filter>Header Files\os\unix</Filter>
+    </ClInclude>
+    <ClInclude Include="src\core\ngx_proxy_protocol.h">
+      <Filter>Header Files\core</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>

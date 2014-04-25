@@ -1,5 +1,5 @@
 ﻿<?xml version="1.0" encoding="utf-8"?>
-<Project DefaultTargets="Build" ToolsVersion="12.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+<Project DefaultTargets="Build" ToolsVersion="14.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
   <ItemGroup Label="ProjectConfigurations">
     <ProjectConfiguration Include="Debug|Win32">
       <Configuration>Debug</Configuration>
@@ -26,22 +26,22 @@
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'" Label="Configuration">
     <ConfigurationType>Application</ConfigurationType>
     <UseDebugLibraries>true</UseDebugLibraries>
-    <PlatformToolset>v120</PlatformToolset>
+    <PlatformToolset>v140</PlatformToolset>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'" Label="Configuration">
     <ConfigurationType>Application</ConfigurationType>
     <UseDebugLibraries>true</UseDebugLibraries>
-    <PlatformToolset>v120</PlatformToolset>
+    <PlatformToolset>v140</PlatformToolset>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'" Label="Configuration">
     <ConfigurationType>Application</ConfigurationType>
     <UseDebugLibraries>false</UseDebugLibraries>
-    <PlatformToolset>v120</PlatformToolset>
+    <PlatformToolset>v140</PlatformToolset>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'" Label="Configuration">
     <ConfigurationType>Application</ConfigurationType>
     <UseDebugLibraries>false</UseDebugLibraries>
-    <PlatformToolset>v120</PlatformToolset>
+    <PlatformToolset>v140</PlatformToolset>
   </PropertyGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.props" />
   <ImportGroup Label="ExtensionSettings">
@@ -119,14 +119,15 @@
       <RuntimeLibrary>MultiThreadedDLL</RuntimeLibrary>
       <WarningLevel>Level3</WarningLevel>
       <DebugInformationFormat>ProgramDatabase</DebugInformationFormat>
-      <AdditionalIncludeDirectories>.\auto;.\src\core;.\src\event;.\src\event\modules;.\src\http;.\src\http\modules;.\src\http\modules\perl;C:\Perl64\lib\Core;.\src\mail;.\src\mysql;.\src\os\win32;D:\opensrc\prce;D:\opensrc\zlib;D:\opensrc\openssl-1.0.1e\include;D:\opensrc\gd-libgd\src;D:\opensrc\geoip-api-c\libGeoIP;D:\opensrc\libxslt-1.1.28;D:\opensrc\libxml2-2.9.1\include;D:\opensrc\libiconv-1.14\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>.\auto;.\src\core;.\src\event;.\src\event\modules;.\src\http;.\src\http\modules;.\src\http\modules\perl;C:\Perl64\lib\Core;.\src\mail;.\src\mysql;.\src\os\win32;D:\open_src\include;D:\open_src\include\gd;D:\open_src\include\pcre;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <MultiProcessorCompilation>true</MultiProcessorCompilation>
     </ClCompile>
     <Link>
       <GenerateDebugInformation>true</GenerateDebugInformation>
       <SubSystem>Console</SubSystem>
       <EnableCOMDATFolding>true</EnableCOMDATFolding>
       <OptimizeReferences>true</OptimizeReferences>
-      <AdditionalLibraryDirectories>D:\opensrc\_lib64;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
+      <AdditionalLibraryDirectories>D:\open_src\_lib64;C:\Perl64\lib\Core;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
       <AdditionalDependencies>libeay32.lib;ssleay32.lib;libgd.lib;libGeoIP.lib;libxml2.lib;libxslt.lib;libexslt.lib;pcre.lib;zdll.lib;ws2_32.lib;perl516.lib;libtcmalloc_minimal.lib;%(AdditionalDependencies)</AdditionalDependencies>
       <ShowProgress>LinkVerboseLib</ShowProgress>
       <ForceSymbolReferences>__tcmalloc</ForceSymbolReferences>
@@ -145,9 +146,6 @@
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|x64'">true</ExcludedFromBuild>
     </None>
     <None Include="src\os\unix\ngx_sunpro_x86.il">
-      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|x64'">true</ExcludedFromBuild>
-    </None>
-    <None Include="src\os\unix\rfork_thread.S">
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|x64'">true</ExcludedFromBuild>
     </None>
   </ItemGroup>
@@ -174,6 +172,7 @@
     <ClCompile Include="src\core\ngx_output_chain.c" />
     <ClCompile Include="src\core\ngx_palloc.c" />
     <ClCompile Include="src\core\ngx_parse.c" />
+    <ClCompile Include="src\core\ngx_proxy_protocol.c" />
     <ClCompile Include="src\core\ngx_queue.c" />
     <ClCompile Include="src\core\ngx_radix_tree.c" />
     <ClCompile Include="src\core\ngx_rbtree.c" />
@@ -183,6 +182,10 @@
     <ClCompile Include="src\core\ngx_slab.c" />
     <ClCompile Include="src\core\ngx_spinlock.c" />
     <ClCompile Include="src\core\ngx_string.c" />
+    <ClCompile Include="src\core\ngx_syslog.c" />
+    <ClCompile Include="src\core\ngx_thread_pool.c">
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|x64'">true</ExcludedFromBuild>
+    </ClCompile>
     <ClCompile Include="src\core\ngx_times.c" />
     <ClCompile Include="src\event\modules\ngx_aio_module.c">
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|x64'">true</ExcludedFromBuild>
@@ -213,12 +216,10 @@
     <ClCompile Include="src\event\ngx_event.c" />
     <ClCompile Include="src\event\ngx_event_accept.c" />
     <ClCompile Include="src\event\ngx_event_acceptex.c" />
-    <ClCompile Include="src\event\ngx_event_busy_lock.c" />
     <ClCompile Include="src\event\ngx_event_connect.c" />
     <ClCompile Include="src\event\ngx_event_connectex.c">
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|x64'">true</ExcludedFromBuild>
     </ClCompile>
-    <ClCompile Include="src\event\ngx_event_mutex.c" />
     <ClCompile Include="src\event\ngx_event_openssl.c" />
     <ClCompile Include="src\event\ngx_event_openssl_stapling.c" />
     <ClCompile Include="src\event\ngx_event_pipe.c" />
@@ -268,6 +269,7 @@
     <ClCompile Include="src\http\modules\ngx_http_static_module.c" />
     <ClCompile Include="src\http\modules\ngx_http_stub_status_module.c" />
     <ClCompile Include="src\http\modules\ngx_http_sub_filter_module.c" />
+    <ClCompile Include="src\http\modules\ngx_http_upstream_hash_module.c" />
     <ClCompile Include="src\http\modules\ngx_http_upstream_ip_hash_module.c" />
     <ClCompile Include="src\http\modules\ngx_http_upstream_keepalive_module.c" />
     <ClCompile Include="src\http\modules\ngx_http_upstream_least_conn_module.c" />
@@ -276,7 +278,6 @@
     <ClCompile Include="src\http\modules\ngx_http_xslt_filter_module.c" />
     <ClCompile Include="src\http\modules\perl\ngx_http_perl_module.c" />
     <ClCompile Include="src\http\ngx_http.c" />
-    <ClCompile Include="src\http\ngx_http_busy_lock.c" />
     <ClCompile Include="src\http\ngx_http_copy_filter_module.c" />
     <ClCompile Include="src\http\ngx_http_core_module.c" />
     <ClCompile Include="src\http\ngx_http_file_cache.c" />
@@ -355,9 +356,6 @@
     <ClCompile Include="src\os\unix\ngx_freebsd_init.c">
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|x64'">true</ExcludedFromBuild>
     </ClCompile>
-    <ClCompile Include="src\os\unix\ngx_freebsd_rfork_thread.c">
-      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|x64'">true</ExcludedFromBuild>
-    </ClCompile>
     <ClCompile Include="src\os\unix\ngx_freebsd_sendfile_chain.c">
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|x64'">true</ExcludedFromBuild>
     </ClCompile>
@@ -377,9 +375,6 @@
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|x64'">true</ExcludedFromBuild>
     </ClCompile>
     <ClCompile Include="src\os\unix\ngx_process_cycle.c">
-      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|x64'">true</ExcludedFromBuild>
-    </ClCompile>
-    <ClCompile Include="src\os\unix\ngx_pthread_thread.c">
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|x64'">true</ExcludedFromBuild>
     </ClCompile>
     <ClCompile Include="src\os\unix\ngx_readv_chain.c">
@@ -407,6 +402,15 @@
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|x64'">true</ExcludedFromBuild>
     </ClCompile>
     <ClCompile Include="src\os\unix\ngx_solaris_sendfilev_chain.c">
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|x64'">true</ExcludedFromBuild>
+    </ClCompile>
+    <ClCompile Include="src\os\unix\ngx_thread_cond.c">
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|x64'">true</ExcludedFromBuild>
+    </ClCompile>
+    <ClCompile Include="src\os\unix\ngx_thread_id.c">
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|x64'">true</ExcludedFromBuild>
+    </ClCompile>
+    <ClCompile Include="src\os\unix\ngx_thread_mutex.c">
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|x64'">true</ExcludedFromBuild>
     </ClCompile>
     <ClCompile Include="src\os\unix\ngx_time.c">
@@ -467,6 +471,7 @@
     <ClInclude Include="src\core\ngx_open_file_cache.h" />
     <ClInclude Include="src\core\ngx_palloc.h" />
     <ClInclude Include="src\core\ngx_parse.h" />
+    <ClInclude Include="src\core\ngx_proxy_protocol.h" />
     <ClInclude Include="src\core\ngx_queue.h" />
     <ClInclude Include="src\core\ngx_radix_tree.h" />
     <ClInclude Include="src\core\ngx_rbtree.h" />
@@ -489,7 +494,6 @@
     <ClInclude Include="src\http\modules\ngx_http_ssl_module.h" />
     <ClInclude Include="src\http\modules\perl\ngx_http_perl_module.h" />
     <ClInclude Include="src\http\ngx_http.h" />
-    <ClInclude Include="src\http\ngx_http_busy_lock.h" />
     <ClInclude Include="src\http\ngx_http_cache.h" />
     <ClInclude Include="src\http\ngx_http_config.h" />
     <ClInclude Include="src\http\ngx_http_core_module.h" />
@@ -515,7 +519,6 @@
     <ClInclude Include="src\os\unix\ngx_files.h" />
     <ClInclude Include="src\os\unix\ngx_freebsd.h" />
     <ClInclude Include="src\os\unix\ngx_freebsd_config.h" />
-    <ClInclude Include="src\os\unix\ngx_freebsd_rfork_thread.h" />
     <ClInclude Include="src\os\unix\ngx_gcc_atomic_amd64.h" />
     <ClInclude Include="src\os\unix\ngx_gcc_atomic_ppc.h" />
     <ClInclude Include="src\os\unix\ngx_gcc_atomic_sparc64.h" />

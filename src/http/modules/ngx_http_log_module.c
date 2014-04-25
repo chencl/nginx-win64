@@ -66,6 +66,7 @@ typedef struct {
     ngx_http_log_script_t      *script;
     time_t                      disk_full_time;
     time_t                      error_log_time;
+    ngx_syslog_peer_t          *syslog_peer;
     ngx_http_log_fmt_t         *format;
     ngx_http_complex_value_t   *filter;
 } ngx_http_log_t;
@@ -151,7 +152,7 @@ static ngx_int_t ngx_http_log_init(ngx_conf_t *cf);
 static ngx_command_t  ngx_http_log_commands[] = {
 
     { ngx_string("log_format"),
-      NGX_HTTP_MAIN_CONF|NGX_HTTP_SRV_CONF|NGX_HTTP_LOC_CONF|NGX_CONF_2MORE,
+      NGX_HTTP_MAIN_CONF|NGX_CONF_2MORE,
       ngx_http_log_set_format,
       NGX_HTTP_MAIN_CONF_OFFSET,
       0,
@@ -240,7 +241,8 @@ static ngx_int_t
 ngx_http_log_handler(ngx_http_request_t *r)
 {
     u_char                   *line, *p;
-    size_t                    len;
+    size_t                    len, size;
+    ssize_t                   n;
     ngx_str_t                 val;
     ngx_uint_t                i, l;
     ngx_http_log_t           *log;
@@ -294,6 +296,16 @@ ngx_http_log_handler(ngx_http_request_t *r)
             }
         }
 
+        if (log[l].syslog_peer) {
+
+            /* length of syslog's PRI and HEADER message parts */
+            len += sizeof("<255>Jan 01 00:00:00 ") - 1
+                   + ngx_cycle->hostname.len + 1
+                   + log[l].syslog_peer->tag.len + 2;
+
+            goto alloc_line;
+        }
+
         len += NGX_LINEFEED_SIZE;
 
         buffer = log[l].file ? log[l].file->data : NULL;
@@ -332,6 +344,8 @@ ngx_http_log_handler(ngx_http_request_t *r)
             }
         }
 
+    alloc_line:
+
         line = ngx_pnalloc(r->pool, len);
         if (line == NULL) {
             return NGX_ERROR;
@@ -339,8 +353,31 @@ ngx_http_log_handler(ngx_http_request_t *r)
 
         p = line;
 
+        if (log[l].syslog_peer) {
+            p = ngx_syslog_add_header(log[l].syslog_peer, line);
+        }
+
         for (i = 0; i < log[l].format->ops->nelts; i++) {
             p = op[i].run(r, p, &op[i]);
+        }
+
+        if (log[l].syslog_peer) {
+
+            size = p - line;
+
+            n = ngx_syslog_send(log[l].syslog_peer, line, size);
+
+            if (n < 0) {
+                ngx_log_error(NGX_LOG_WARN, r->connection->log, 0,
+                              "send() to syslog failed");
+
+            } else if ((size_t) n != size) {
+                ngx_log_error(NGX_LOG_WARN, r->connection->log, 0,
+                              "send() to syslog has written only %z of %uz",
+                              n, size);
+            }
+
+            continue;
         }
 
         ngx_linefeed(p);
@@ -707,10 +744,23 @@ ngx_http_log_flush(ngx_open_file_t *file, ngx_log_t *log)
 static void
 ngx_http_log_flush_handler(ngx_event_t *ev)
 {
+    ngx_open_file_t     *file;
+    ngx_http_log_buf_t  *buffer;
+
     ngx_log_debug0(NGX_LOG_DEBUG_EVENT, ev->log, 0,
                    "http log buffer flush handler");
 
-    ngx_http_log_flush(ev->data, ev->log);
+    if (ev->timedout) {
+        ngx_http_log_flush(ev->data, ev->log);
+        return;
+    }
+
+    /* cancel the flush timer for graceful shutdown */
+
+    file = ev->data;
+    buffer = file->data;
+
+    buffer->event = NULL;
 }
 
 
@@ -1072,14 +1122,12 @@ ngx_http_log_merge_loc_conf(ngx_conf_t *cf, void *parent, void *child)
         return NGX_CONF_ERROR;
     }
 
+    ngx_memzero(log, sizeof(ngx_http_log_t));
+
     log->file = ngx_conf_open_file(cf->cycle, &ngx_http_access_log);
     if (log->file == NULL) {
         return NGX_CONF_ERROR;
     }
-
-    log->script = NULL;
-    log->disk_full_time = 0;
-    log->error_log_time = 0;
 
     lmcf = ngx_http_conf_get_module_main_conf(cf, ngx_http_log_module);
     fmt = lmcf->formats.elts;
@@ -1101,8 +1149,9 @@ ngx_http_log_set_log(ngx_conf_t *cf, ngx_command_t *cmd, void *conf)
     ngx_int_t                          gzip;
     ngx_uint_t                         i, n;
     ngx_msec_t                         flush;
-    ngx_str_t                         *value, name, s, filter;
+    ngx_str_t                         *value, name, s;
     ngx_http_log_t                    *log;
+    ngx_syslog_peer_t                 *peer;
     ngx_http_log_buf_t                *buffer;
     ngx_http_log_fmt_t                *fmt;
     ngx_http_log_main_conf_t          *lmcf;
@@ -1138,6 +1187,23 @@ ngx_http_log_set_log(ngx_conf_t *cf, ngx_command_t *cmd, void *conf)
 
     ngx_memzero(log, sizeof(ngx_http_log_t));
 
+
+    if (ngx_strncmp(value[1].data, "syslog:", 7) == 0) {
+
+        peer = ngx_pcalloc(cf->pool, sizeof(ngx_syslog_peer_t));
+        if (peer == NULL) {
+            return NGX_CONF_ERROR;
+        }
+
+        if (ngx_syslog_process_conf(cf, peer) != NGX_CONF_OK) {
+            return NGX_CONF_ERROR;
+        }
+
+        log->syslog_peer = peer;
+
+        goto process_formats;
+    }
+
     n = ngx_http_script_variables_count(&value[1]);
 
     if (n == 0) {
@@ -1171,6 +1237,8 @@ ngx_http_log_set_log(ngx_conf_t *cf, ngx_command_t *cmd, void *conf)
         }
     }
 
+process_formats:
+
     if (cf->args->nelts >= 3) {
         name = value[2];
 
@@ -1202,7 +1270,6 @@ ngx_http_log_set_log(ngx_conf_t *cf, ngx_command_t *cmd, void *conf)
     size = 0;
     flush = 0;
     gzip = 0;
-    filter.len = 0;
 
     for (i = 3; i < cf->args->nelts; i++) {
 
@@ -1270,8 +1337,25 @@ ngx_http_log_set_log(ngx_conf_t *cf, ngx_command_t *cmd, void *conf)
         }
 
         if (ngx_strncmp(value[i].data, "if=", 3) == 0) {
-            filter.len = value[i].len - 3;
-            filter.data = value[i].data + 3;
+            s.len = value[i].len - 3;
+            s.data = value[i].data + 3;
+
+            ngx_memzero(&ccv, sizeof(ngx_http_compile_complex_value_t));
+
+            ccv.cf = cf;
+            ccv.value = &s;
+            ccv.complex_value = ngx_palloc(cf->pool,
+                                           sizeof(ngx_http_complex_value_t));
+            if (ccv.complex_value == NULL) {
+                return NGX_CONF_ERROR;
+            }
+
+            if (ngx_http_compile_complex_value(&ccv) != NGX_OK) {
+                return NGX_CONF_ERROR;
+            }
+
+            log->filter = ccv.complex_value;
+
             continue;
         }
 
@@ -1292,6 +1376,12 @@ ngx_http_log_set_log(ngx_conf_t *cf, ngx_command_t *cmd, void *conf)
         if (log->script) {
             ngx_conf_log_error(NGX_LOG_EMERG, cf, 0,
                                "buffered logs cannot have variables in name");
+            return NGX_CONF_ERROR;
+        }
+
+        if (log->syslog_peer) {
+            ngx_conf_log_error(NGX_LOG_EMERG, cf, 0,
+                               "logs to syslog cannot be buffered");
             return NGX_CONF_ERROR;
         }
 
@@ -1334,6 +1424,7 @@ ngx_http_log_set_log(ngx_conf_t *cf, ngx_command_t *cmd, void *conf)
             buffer->event->data = log->file;
             buffer->event->handler = ngx_http_log_flush_handler;
             buffer->event->log = &cf->cycle->new_log;
+            buffer->event->cancelable = 1;
 
             buffer->flush = flush;
         }
@@ -1342,23 +1433,6 @@ ngx_http_log_set_log(ngx_conf_t *cf, ngx_command_t *cmd, void *conf)
 
         log->file->flush = ngx_http_log_flush;
         log->file->data = buffer;
-    }
-
-    if (filter.len) {
-        log->filter = ngx_palloc(cf->pool, sizeof(ngx_http_complex_value_t));
-        if (log->filter == NULL) {
-            return NGX_CONF_ERROR;
-        }
-
-        ngx_memzero(&ccv, sizeof(ngx_http_compile_complex_value_t));
-
-        ccv.cf = cf;
-        ccv.value = &filter;
-        ccv.complex_value = log->filter;
-
-        if (ngx_http_compile_complex_value(&ccv) != NGX_OK) {
-            return NGX_CONF_ERROR;
-        }
     }
 
     return NGX_CONF_OK;
@@ -1373,12 +1447,6 @@ ngx_http_log_set_format(ngx_conf_t *cf, ngx_command_t *cmd, void *conf)
     ngx_str_t           *value;
     ngx_uint_t           i;
     ngx_http_log_fmt_t  *fmt;
-
-    if (cf->cmd_type != NGX_HTTP_MAIN_CONF) {
-        ngx_conf_log_error(NGX_LOG_WARN, cf, 0,
-                           "the \"log_format\" directive may be used "
-                           "only on \"http\" level");
-    }
 
     value = cf->args->elts;
 

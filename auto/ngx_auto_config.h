@@ -24,6 +24,11 @@
 #endif // !NGX_PERL_MODULES
 
 
+
+#ifndef NGX_THREADS
+#define NGX_THREADS  1
+#endif
+
 #ifndef NGX_HAVE_AIO
 #define NGX_HAVE_AIO  1
 #endif
@@ -33,9 +38,9 @@
 #endif
 
 // windows ²»Ö§³Ö
-// #ifndef NGX_HAVE_FILE_AIO
-// #define NGX_HAVE_FILE_AIO 1
-// #endif
+ //#ifndef NGX_HAVE_FILE_AIO
+ //#define NGX_HAVE_FILE_AIO 1
+ //#endif
 
 #ifndef NGX_HAVE_AIO_SENDFILE
 #define NGX_HAVE_AIO_SENDFILE 1

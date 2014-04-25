@@ -652,6 +652,7 @@ ngx_http_ssl_handshake(ngx_event_t *rev)
 
     if (n == -1) {
         if (err == NGX_EAGAIN) {
+            rev->ready = 0;
 
             if (!rev->timer_set) {
                 ngx_add_timer(rev, c->listening->post_accept_timeout);
@@ -1071,6 +1072,8 @@ ngx_http_process_request_uri(ngx_http_request_t *r)
         cscf = ngx_http_get_module_srv_conf(r, ngx_http_core_module);
 
         if (ngx_http_parse_complex_uri(r, cscf->merge_slashes) != NGX_OK) {
+            r->uri.len = 0;
+
             ngx_log_error(NGX_LOG_INFO, r->connection->log, 0,
                           "client sent invalid request");
             ngx_http_finalize_request(r, NGX_HTTP_BAD_REQUEST);
@@ -1225,12 +1228,11 @@ ngx_http_process_request_headers(ngx_event_t *rev)
 
                     if (len > NGX_MAX_ERROR_STR - 300) {
                         len = NGX_MAX_ERROR_STR - 300;
-                        p[len++] = '.'; p[len++] = '.'; p[len++] = '.';
                     }
 
                     ngx_log_error(NGX_LOG_INFO, c->log, 0,
-                                  "client sent too long header line: \"%*s\"",
-                                  len, r->header_name_start);
+                                "client sent too long header line: \"%*s...\"",
+                                len, r->header_name_start);
 
                     ngx_http_finalize_request(r,
                                             NGX_HTTP_REQUEST_HEADER_TOO_LARGE);
@@ -2168,13 +2170,11 @@ ngx_http_request_handler(ngx_event_t *ev)
 {
     ngx_connection_t    *c;
     ngx_http_request_t  *r;
-    ngx_http_log_ctx_t  *ctx;
 
     c = ev->data;
     r = c->data;
 
-    ctx = c->log->data;
-    ctx->current_request = r;
+    ngx_http_set_log_request(c->log, r);
 
     ngx_log_debug2(NGX_LOG_DEBUG_HTTP, c->log, 0,
                    "http run request: \"%V?%V\"", &r->uri, &r->args);
@@ -2194,7 +2194,6 @@ void
 ngx_http_run_posted_requests(ngx_connection_t *c)
 {
     ngx_http_request_t         *r;
-    ngx_http_log_ctx_t         *ctx;
     ngx_http_posted_request_t  *pr;
 
     for ( ;; ) {
@@ -2214,8 +2213,7 @@ ngx_http_run_posted_requests(ngx_connection_t *c)
 
         r = pr->request;
 
-        ctx = c->log->data;
-        ctx->current_request = r;
+        ngx_http_set_log_request(c->log, r);
 
         ngx_log_debug2(NGX_LOG_DEBUG_HTTP, c->log, 0,
                        "http posted request: \"%V?%V\"", &r->uri, &r->args);
@@ -2527,6 +2525,11 @@ ngx_http_finalize_connection(ngx_http_request_t *r)
         return;
     }
 
+    if (r->reading_body) {
+        r->keepalive = 0;
+        r->lingering_close = 1;
+    }
+
     if (!ngx_terminate
          && !ngx_exiting
          && r->keepalive
@@ -2653,6 +2656,12 @@ ngx_http_writer(ngx_http_request_t *r)
     }
 
     if (r->buffered || r->postponed || (r == r->main && c->buffered)) {
+
+#if (NGX_HTTP_SPDY)
+        if (r->spdy_stream) {
+            return;
+        }
+#endif
 
         if (!wev->delayed) {
             ngx_add_timer(wev, clcf->send_timeout);
