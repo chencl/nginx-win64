@@ -25,7 +25,7 @@ $NGX_INCLUDE_UNISTD_H
 $NGX_INCLUDE_INTTYPES_H
 $NGX_INCLUDE_AUTO_CONFIG_H
 
-int main() {
+int main(void) {
     printf("%d", (int) sizeof($ngx_type));
     return 0;
 }
@@ -43,9 +43,6 @@ if [ -x $NGX_AUTOTEST ]; then
     ngx_size=`$NGX_AUTOTEST`
     echo " $ngx_size bytes"
 fi
-
-
-rm -rf $NGX_AUTOTEST*
 
 
 case $ngx_size in
@@ -69,6 +66,11 @@ case $ngx_size in
         echo $ngx_test       >> $NGX_AUTOCONF_ERR
         echo "----------"    >> $NGX_AUTOCONF_ERR
 
+        rm -rf $NGX_AUTOTEST*
+
         exit 1
 esac
+
+
+rm -rf $NGX_AUTOTEST*
 

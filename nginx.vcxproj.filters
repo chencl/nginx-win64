@@ -91,6 +91,9 @@
     <Filter Include="Header Files\os\unix">
       <UniqueIdentifier>{828af1ba-671d-4154-8ec7-2a6324d9ab91}</UniqueIdentifier>
     </Filter>
+    <Filter Include="Source Files\http\v2">
+      <UniqueIdentifier>{8649891e-5525-497b-b43c-61a607313f08}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ResourceCompile Include="src\os\win32\nginx.rc">
@@ -697,6 +700,54 @@
       <Filter>Source Files\os\unix</Filter>
     </ClCompile>
     <ClCompile Include="src\os\unix\ngx_thread_mutex.c">
+      <Filter>Source Files\os\unix</Filter>
+    </ClCompile>
+    <ClCompile Include="src\core\ngx_module.c">
+      <Filter>Source Files\core</Filter>
+    </ClCompile>
+    <ClCompile Include="src\core\ngx_parse_time.c">
+      <Filter>Source Files\core</Filter>
+    </ClCompile>
+    <ClCompile Include="src\core\ngx_rwlock.c">
+      <Filter>Source Files\core</Filter>
+    </ClCompile>
+    <ClCompile Include="src\core\ngx_sha1.c">
+      <Filter>Source Files\core</Filter>
+    </ClCompile>
+    <ClCompile Include="src\os\win32\ngx_dlopen.c">
+      <Filter>Source Files\os\win32</Filter>
+    </ClCompile>
+    <ClCompile Include="src\http\modules\ngx_http_slice_filter_module.c">
+      <Filter>Source Files\http\modules</Filter>
+    </ClCompile>
+    <ClCompile Include="src\http\modules\ngx_http_upstream_zone_module.c">
+      <Filter>Source Files\http\modules</Filter>
+    </ClCompile>
+    <ClCompile Include="src\http\v2\ngx_http_v2.c">
+      <Filter>Source Files\http\v2</Filter>
+    </ClCompile>
+    <ClCompile Include="src\http\v2\ngx_http_v2_filter_module.c">
+      <Filter>Source Files\http\v2</Filter>
+    </ClCompile>
+    <ClCompile Include="src\http\v2\ngx_http_v2_huff_decode.c">
+      <Filter>Source Files\http\v2</Filter>
+    </ClCompile>
+    <ClCompile Include="src\http\v2\ngx_http_v2_huff_encode.c">
+      <Filter>Source Files\http\v2</Filter>
+    </ClCompile>
+    <ClCompile Include="src\http\v2\ngx_http_v2_module.c">
+      <Filter>Source Files\http\v2</Filter>
+    </ClCompile>
+    <ClCompile Include="src\http\v2\ngx_http_v2_table.c">
+      <Filter>Source Files\http\v2</Filter>
+    </ClCompile>
+    <ClCompile Include="src\os\unix\ngx_dlopen.c">
+      <Filter>Source Files\os\unix</Filter>
+    </ClCompile>
+    <ClCompile Include="src\os\unix\ngx_udp_send.c">
+      <Filter>Source Files\os\unix</Filter>
+    </ClCompile>
+    <ClCompile Include="src\os\unix\ngx_udp_sendmsg_chain.c">
       <Filter>Source Files\os\unix</Filter>
     </ClCompile>
   </ItemGroup>

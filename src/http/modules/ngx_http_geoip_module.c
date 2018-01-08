@@ -8,7 +8,7 @@
 #include <ngx_config.h>
 #include <ngx_core.h>
 #include <ngx_http.h>
-typedef long _off_t;
+
 #include <GeoIP.h>
 #include <GeoIPCity.h>
 

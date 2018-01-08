@@ -24,6 +24,8 @@ ngx_os_io_t ngx_os_io = {
     ngx_readv_chain,
     ngx_udp_unix_recv,
     ngx_unix_send,
+    ngx_udp_unix_send,
+    ngx_udp_unix_sendmsg_chain,
     ngx_writev_chain,
     0
 };
@@ -32,7 +34,8 @@ ngx_os_io_t ngx_os_io = {
 ngx_int_t
 ngx_os_init(ngx_log_t *log)
 {
-    ngx_uint_t  n;
+    ngx_time_t  *tp;
+    ngx_uint_t   n;
 
 #if (NGX_HAVE_OS_SPECIFIC_INIT)
     if (ngx_os_specific_init(log) != NGX_OK) {
@@ -63,7 +66,7 @@ ngx_os_init(ngx_log_t *log)
 
     if (getrlimit(RLIMIT_NOFILE, &rlmt) == -1) {
         ngx_log_error(NGX_LOG_ALERT, log, errno,
-                      "getrlimit(RLIMIT_NOFILE) failed)");
+                      "getrlimit(RLIMIT_NOFILE) failed");
         return NGX_ERROR;
     }
 
@@ -75,7 +78,8 @@ ngx_os_init(ngx_log_t *log)
     ngx_inherited_nonblocking = 0;
 #endif
 
-    srandom(ngx_time());
+    tp = ngx_timeofday();
+    srandom(((unsigned) ngx_pid << 16) ^ tp->sec ^ tp->msec);
 
     return NGX_OK;
 }

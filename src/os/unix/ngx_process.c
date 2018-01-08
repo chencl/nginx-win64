@@ -306,7 +306,7 @@ ngx_init_signals(ngx_log_t *log)
 }
 
 
-void
+static void
 ngx_signal_handler(int signo)
 {
     char            *action;
@@ -405,6 +405,7 @@ ngx_signal_handler(int signo)
                 break;
             }
             ngx_debug_quit = 1;
+            /* fall through */
         case ngx_signal_value(NGX_SHUTDOWN_SIGNAL):
             ngx_quit = 1;
             action = ", shutting down";
@@ -611,7 +612,7 @@ ngx_debug_point(void)
 
 
 ngx_int_t
-ngx_os_signal_process(ngx_cycle_t *cycle, char *name, ngx_int_t pid)
+ngx_os_signal_process(ngx_cycle_t *cycle, char *name, ngx_pid_t pid)
 {
     ngx_signal_t  *sig;
 

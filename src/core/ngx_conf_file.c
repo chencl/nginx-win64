@@ -10,6 +10,7 @@
 
 #define NGX_CONF_BUFFER  4096
 
+static ngx_int_t ngx_conf_add_dump(ngx_conf_t *cf, ngx_str_t *filename);
 static ngx_int_t ngx_conf_handler(ngx_conf_t *cf, ngx_int_t last);
 static ngx_int_t ngx_conf_read_token(ngx_conf_t *cf);
 static void ngx_conf_flush_files(ngx_cycle_t *cycle);
@@ -97,6 +98,62 @@ ngx_conf_param(ngx_conf_t *cf)
 }
 
 
+static ngx_int_t
+ngx_conf_add_dump(ngx_conf_t *cf, ngx_str_t *filename)
+{
+    off_t             size;
+    u_char           *p;
+    uint32_t          hash;
+    ngx_buf_t        *buf;
+    ngx_str_node_t   *sn;
+    ngx_conf_dump_t  *cd;
+
+    hash = ngx_crc32_long(filename->data, filename->len);
+
+    sn = ngx_str_rbtree_lookup(&cf->cycle->config_dump_rbtree, filename, hash);
+
+    if (sn) {
+        cf->conf_file->dump = NULL;
+        return NGX_OK;
+    }
+
+    p = ngx_pstrdup(cf->cycle->pool, filename);
+    if (p == NULL) {
+        return NGX_ERROR;
+    }
+
+    cd = ngx_array_push(&cf->cycle->config_dump);
+    if (cd == NULL) {
+        return NGX_ERROR;
+    }
+
+    size = ngx_file_size(&cf->conf_file->file.info);
+
+    buf = ngx_create_temp_buf(cf->cycle->pool, (size_t) size);
+    if (buf == NULL) {
+        return NGX_ERROR;
+    }
+
+    cd->name.data = p;
+    cd->name.len = filename->len;
+    cd->buffer = buf;
+
+    cf->conf_file->dump = buf;
+
+    sn = ngx_palloc(cf->temp_pool, sizeof(ngx_str_node_t));
+    if (sn == NULL) {
+        return NGX_ERROR;
+    }
+
+    sn->node.key = hash;
+    sn->str = cd->name;
+
+    ngx_rbtree_insert(&cf->cycle->config_dump_rbtree, &sn->node);
+
+    return NGX_OK;
+}
+
+
 char *
 ngx_conf_parse(ngx_conf_t *cf, ngx_str_t *filename)
 {
@@ -157,6 +214,20 @@ ngx_conf_parse(ngx_conf_t *cf, ngx_str_t *filename)
         cf->conf_file->line = 1;
 
         type = parse_file;
+
+        if (ngx_dump_config
+#if (NGX_DEBUG)
+            || 1
+#endif
+           )
+        {
+            if (ngx_conf_add_dump(cf, filename) != NGX_OK) {
+                goto failed;
+            }
+
+        } else {
+            cf->conf_file->dump = NULL;
+        }
 
     } else if (cf->conf_file->file.fd != NGX_INVALID_FILE) {
 
@@ -293,9 +364,9 @@ ngx_conf_handler(ngx_conf_t *cf, ngx_int_t last)
 
     found = 0;
 
-    for (i = 0; ngx_modules[i]; i++) {
+    for (i = 0; cf->cycle->modules[i]; i++) {
 
-        cmd = ngx_modules[i]->commands;
+        cmd = cf->cycle->modules[i]->commands;
         if (cmd == NULL) {
             continue;
         }
@@ -312,8 +383,8 @@ ngx_conf_handler(ngx_conf_t *cf, ngx_int_t last)
 
             found = 1;
 
-            if (ngx_modules[i]->type != NGX_CONF_MODULE
-                && ngx_modules[i]->type != cf->module_type)
+            if (cf->cycle->modules[i]->type != NGX_CONF_MODULE
+                && cf->cycle->modules[i]->type != cf->module_type)
             {
                 continue;
             }
@@ -375,16 +446,16 @@ ngx_conf_handler(ngx_conf_t *cf, ngx_int_t last)
             conf = NULL;
 
             if (cmd->type & NGX_DIRECT_CONF) {
-                conf = ((void **) cf->ctx)[ngx_modules[i]->index];
+                conf = ((void **) cf->ctx)[cf->cycle->modules[i]->index];
 
             } else if (cmd->type & NGX_MAIN_CONF) {
-                conf = &(((void **) cf->ctx)[ngx_modules[i]->index]);
+                conf = &(((void **) cf->ctx)[cf->cycle->modules[i]->index]);
 
             } else if (cf->ctx) {
                 confp = *(void **) ((char *) cf->ctx + cmd->conf);
 
                 if (confp) {
-                    conf = confp[ngx_modules[i]->ctx_index];
+                    conf = confp[cf->cycle->modules[i]->ctx_index];
                 }
             }
 
@@ -437,7 +508,7 @@ ngx_conf_read_token(ngx_conf_t *cf)
     ngx_uint_t   found, need_space, last_space, sharp_comment, variable;
     ngx_uint_t   quoted, s_quoted, d_quoted, start_line;
     ngx_str_t   *word;
-    ngx_buf_t   *b;
+    ngx_buf_t   *b, *dump;
 
     found = 0;
     need_space = 0;
@@ -450,6 +521,7 @@ ngx_conf_read_token(ngx_conf_t *cf)
 
     cf->args->nelts = 0;
     b = cf->conf_file->buffer;
+    dump = cf->conf_file->dump;
     start = b->pos;
     start_line = cf->conf_file->line;
 
@@ -531,6 +603,10 @@ ngx_conf_read_token(ngx_conf_t *cf)
             b->pos = b->start + len;
             b->last = b->pos + n;
             start = b->start;
+
+            if (dump) {
+                dump->last = ngx_cpymem(dump->last, b->pos, size);
+            }
         }
 
         ch = *b->pos++;
@@ -572,9 +648,9 @@ ngx_conf_read_token(ngx_conf_t *cf)
                 need_space = 0;
 
             } else {
-                 ngx_conf_log_error(NGX_LOG_EMERG, cf, 0,
-                                    "unexpected \"%c\"", ch);
-                 return NGX_ERROR;
+                ngx_conf_log_error(NGX_LOG_EMERG, cf, 0,
+                                   "unexpected \"%c\"", ch);
+                return NGX_ERROR;
             }
         }
 
@@ -680,7 +756,7 @@ ngx_conf_read_token(ngx_conf_t *cf)
                     return NGX_ERROR;
                 }
 
-                word->data = ngx_pnalloc(cf->pool, b->pos - start + 1);
+                word->data = ngx_pnalloc(cf->pool, b->pos - 1 - start + 1);
                 if (word->data == NULL) {
                     return NGX_ERROR;
                 }
@@ -1295,7 +1371,7 @@ ngx_conf_set_enum_slot(ngx_conf_t *cf, ngx_command_t *cmd, void *conf)
         return NGX_CONF_OK;
     }
 
-    ngx_conf_log_error(NGX_LOG_WARN, cf, 0,
+    ngx_conf_log_error(NGX_LOG_EMERG, cf, 0,
                        "invalid value \"%s\"", value[1].data);
 
     return NGX_CONF_ERROR;
@@ -1337,7 +1413,7 @@ ngx_conf_set_bitmask_slot(ngx_conf_t *cf, ngx_command_t *cmd, void *conf)
         }
 
         if (mask[m].name.len == 0) {
-            ngx_conf_log_error(NGX_LOG_WARN, cf, 0,
+            ngx_conf_log_error(NGX_LOG_EMERG, cf, 0,
                                "invalid value \"%s\"", value[i].data);
 
             return NGX_CONF_ERROR;

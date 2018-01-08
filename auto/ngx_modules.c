@@ -20,7 +20,7 @@ extern ngx_module_t  ngx_http_auth_basic_module;
 extern ngx_module_t  ngx_http_browser_module;
 extern ngx_module_t  ngx_http_chunked_filter_module;
 extern ngx_module_t  ngx_http_flv_module;
-extern ngx_module_t  ngx_http_geo_module;
+//extern ngx_module_t  ngx_http_geo_module;
 extern ngx_module_t  ngx_http_dav_module;
 extern ngx_module_t  ngx_http_log_module;
 extern ngx_module_t  ngx_http_upstream_module;
@@ -64,11 +64,11 @@ extern ngx_module_t  ngx_http_copy_filter_module;
 extern ngx_module_t  ngx_http_range_body_filter_module;
 extern ngx_module_t  ngx_http_not_modified_filter_module;
 extern ngx_module_t  ngx_http_xslt_filter_module;
-extern ngx_module_t  ngx_http_image_filter_module;
-extern ngx_module_t  ngx_http_geoip_module;
+//extern ngx_module_t  ngx_http_image_filter_module;
+//extern ngx_module_t  ngx_http_geoip_module;
 // extern ngx_module_t  ngx_http_degradation_module;
-extern ngx_module_t  ngx_http_spdy_module;
-extern ngx_module_t  ngx_http_spdy_filter_module;
+//extern ngx_module_t  ngx_http_spdy_module;
+//extern ngx_module_t  ngx_http_spdy_filter_module;
 
 ngx_module_t *ngx_modules[] = {
 	&ngx_core_module,
@@ -87,7 +87,7 @@ ngx_module_t *ngx_modules[] = {
 	&ngx_http_browser_module,
 	&ngx_http_chunked_filter_module,
 	&ngx_http_flv_module,
-	&ngx_http_geo_module,
+	//&ngx_http_geo_module,
 	&ngx_http_dav_module,
 	&ngx_http_log_module,
 	&ngx_http_upstream_module,
@@ -131,10 +131,13 @@ ngx_module_t *ngx_modules[] = {
 	&ngx_http_range_body_filter_module,
 	&ngx_http_not_modified_filter_module,
 	&ngx_http_xslt_filter_module,
-	&ngx_http_image_filter_module,
-	&ngx_http_geoip_module,
-	// &ngx_http_degradation_module,
-	&ngx_http_spdy_module,
-	&ngx_http_spdy_filter_module,
+	//&ngx_http_image_filter_module,
+	//&ngx_http_geoip_module,
+	//&ngx_http_degradation_module,
+	//&ngx_http_spdy_module,
+	//&ngx_http_spdy_filter_module,
     NULL
+};
+
+char *ngx_module_names[] = {NULL
 };

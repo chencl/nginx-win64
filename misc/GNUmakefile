@@ -4,10 +4,11 @@ VER =		$(shell grep 'define NGINX_VERSION' src/core/nginx.h	\
 NGINX =		nginx-$(VER)
 TEMP =		tmp
 
+CC =		cl
 OBJS =		objs.msvc8
-OPENSSL =	openssl-1.0.1m
-ZLIB =		zlib-1.2.8
-PCRE =		pcre-8.35
+OPENSSL =	openssl-1.0.2l
+ZLIB =		zlib-1.2.11
+PCRE =		pcre-8.41
 
 
 release: export
@@ -19,8 +20,6 @@ release: export
 	rm $(TEMP)/$(NGINX)/src/event/ngx_event_connectex.c
 	rm $(TEMP)/$(NGINX)/src/event/modules/ngx_iocp_module.*
 	rm -r $(TEMP)/$(NGINX)/src/os/win32
-
-	rm -r $(TEMP)/$(NGINX)/src/mysql
 
 	mv $(TEMP)/$(NGINX)/docs/text/LICENSE $(TEMP)/$(NGINX)
 	mv $(TEMP)/$(NGINX)/docs/text/README $(TEMP)/$(NGINX)
@@ -49,7 +48,7 @@ RELEASE:
 
 win32:
 	./auto/configure						\
-		--with-cc=cl						\
+		--with-cc=$(CC)						\
 		--builddir=$(OBJS)					\
 		--with-debug						\
 		--prefix= 						\
@@ -67,6 +66,7 @@ win32:
 		--with-pcre=$(OBJS)/lib/$(PCRE)				\
 		--with-zlib=$(OBJS)/lib/$(ZLIB)				\
 		--with-select_module					\
+		--with-http_v2_module					\
 		--with-http_realip_module				\
 		--with-http_addition_module				\
 		--with-http_sub_module					\
@@ -79,12 +79,14 @@ win32:
 		--with-http_auth_request_module				\
 		--with-http_random_index_module				\
 		--with-http_secure_link_module				\
+		--with-http_slice_module				\
 		--with-mail						\
+		--with-stream						\
 		--with-openssl=$(OBJS)/lib/$(OPENSSL)			\
-		--with-openssl-opt=enable-tlsext			\
+		--with-openssl-opt=no-asm				\
 		--with-http_ssl_module					\
 		--with-mail_ssl_module					\
-		--with-ipv6
+		--with-stream_ssl_module
 
 
 zip: export

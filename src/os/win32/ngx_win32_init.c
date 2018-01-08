@@ -25,6 +25,8 @@ ngx_os_io_t ngx_os_io = {
     ngx_wsarecv_chain,
     ngx_udp_wsarecv,
     ngx_wsasend,
+    NULL,
+    NULL,
     ngx_wsasend_chain,
     0
 };
@@ -59,12 +61,13 @@ static GUID dx_guid = WSAID_DISCONNECTEX;
 ngx_int_t
 ngx_os_init(ngx_log_t *log)
 {
-    DWORD        bytes;
-    SOCKET       s;
-    WSADATA      wsd;
-    ngx_err_t    err;
-    ngx_uint_t   n;
-    SYSTEM_INFO  si;
+    DWORD         bytes;
+    SOCKET        s;
+    WSADATA       wsd;
+    ngx_err_t     err;
+    ngx_time_t   *tp;
+    ngx_uint_t    n;
+    SYSTEM_INFO   si;
 
     /* get Windows version */
 
@@ -118,6 +121,7 @@ ngx_os_init(ngx_log_t *log)
 
     GetSystemInfo(&si);
     ngx_pagesize = si.dwPageSize;
+    ngx_allocation_granularity = si.dwAllocationGranularity;
     ngx_ncpu = si.dwNumberOfProcessors;
     ngx_cacheline_size = NGX_CPU_CACHE_LINE;
 
@@ -151,7 +155,7 @@ ngx_os_init(ngx_log_t *log)
     s = ngx_socket(AF_INET, SOCK_STREAM, IPPROTO_IP);
     if (s == (ngx_socket_t) -1) {
         ngx_log_error(NGX_LOG_EMERG, log, ngx_socket_errno,
-                      ngx_socket_n " falied");
+                      ngx_socket_n " failed");
         return NGX_ERROR;
     }
 
@@ -236,7 +240,8 @@ ngx_os_init(ngx_log_t *log)
         ngx_sprintf((u_char *) ngx_unique, "%P%Z", ngx_pid);
     }
 
-    srand((ngx_pid << 16) ^ (unsigned) ngx_time());
+    tp = ngx_timeofday();
+    srand((ngx_pid << 16) ^ (unsigned) tp->sec ^ tp->msec);
 
     return NGX_OK;
 }

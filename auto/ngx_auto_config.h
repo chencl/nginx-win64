@@ -15,7 +15,7 @@
 #endif
 
 #ifndef NGX_HAVE_CPU_AFFINITY
-#define NGX_HAVE_CPU_AFFINITY 1
+#define NGX_HAVE_CPU_AFFINITY 0
 #endif
 
 #ifndef NGX_PERL_MODULES
@@ -23,11 +23,14 @@
 #define NGX_HAVE_PERL_MULTIPLICITY 1
 #endif // !NGX_PERL_MODULES
 
+#ifndef NGX_HTTP_V2
+#define NGX_HTTP_V2 1
+#endif // !NGX_HTTP_V2
 
 
-#ifndef NGX_THREADS
-#define NGX_THREADS  1
-#endif
+//#ifndef NGX_THREADS
+//#define NGX_THREADS  1
+//#endif
 
 #ifndef NGX_HAVE_AIO
 #define NGX_HAVE_AIO  1
@@ -42,9 +45,9 @@
  //#define NGX_HAVE_FILE_AIO 1
  //#endif
 
-#ifndef NGX_HAVE_AIO_SENDFILE
-#define NGX_HAVE_AIO_SENDFILE 1
-#endif
+//#ifndef NGX_HAVE_AIO_SENDFILE
+//#define NGX_HAVE_AIO_SENDFILE 1
+//#endif
 
 #ifndef NGX_HAVE_IOCP
 #define NGX_HAVE_IOCP  1
@@ -117,6 +120,11 @@
 #ifndef NGX_HAVE_INET6
 #define NGX_HAVE_INET6 1
 #endif
+
+#ifndef NGX_HTTP_UPSTREAM_ZONE
+#define NGX_HTTP_UPSTREAM_ZONE 1
+#endif
+
 
 // windows ²»Ö§³Ö
 // #ifndef NGX_HAVE_KEEPALIVE_TUNABLE

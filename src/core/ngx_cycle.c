@@ -15,6 +15,7 @@ static ngx_int_t ngx_init_zone_pool(ngx_cycle_t *cycle,
     ngx_shm_zone_t *shm_zone);
 static ngx_int_t ngx_test_lockfile(u_char *file, ngx_log_t *log);
 static void ngx_clean_old_cycles(ngx_event_t *ev);
+static void ngx_shutdown_timer_handler(ngx_event_t *ev);
 
 
 volatile ngx_cycle_t  *ngx_cycle;
@@ -22,13 +23,11 @@ ngx_array_t            ngx_old_cycles;
 
 static ngx_pool_t     *ngx_temp_pool;
 static ngx_event_t     ngx_cleaner_event;
+static ngx_event_t     ngx_shutdown_event;
 
 ngx_uint_t             ngx_test_config;
+ngx_uint_t             ngx_dump_config;
 ngx_uint_t             ngx_quiet_mode;
-
-#if (NGX_OLD_THREADS)
-ngx_tls_key_t          ngx_core_tls_key;
-#endif
 
 
 /* STUB NAME */
@@ -40,7 +39,7 @@ ngx_cycle_t *
 ngx_init_cycle(ngx_cycle_t *old_cycle)
 {
     void                *rv;
-    char               **senv, **env;
+    char               **senv;
     ngx_uint_t           i, n;
     ngx_log_t           *log;
     ngx_time_t          *tp;
@@ -116,17 +115,25 @@ ngx_init_cycle(ngx_cycle_t *old_cycle)
 
     n = old_cycle->paths.nelts ? old_cycle->paths.nelts : 10;
 
-    cycle->paths.elts = ngx_pcalloc(pool, n * sizeof(ngx_path_t *));
-    if (cycle->paths.elts == NULL) {
+    if (ngx_array_init(&cycle->paths, pool, n, sizeof(ngx_path_t *))
+        != NGX_OK)
+    {
         ngx_destroy_pool(pool);
         return NULL;
     }
 
-    cycle->paths.nelts = 0;
-    cycle->paths.size = sizeof(ngx_path_t *);
-    cycle->paths.nalloc = n;
-    cycle->paths.pool = pool;
+    ngx_memzero(cycle->paths.elts, n * sizeof(ngx_path_t *));
 
+
+    if (ngx_array_init(&cycle->config_dump, pool, 1, sizeof(ngx_conf_dump_t))
+        != NGX_OK)
+    {
+        ngx_destroy_pool(pool);
+        return NULL;
+    }
+
+    ngx_rbtree_init(&cycle->config_dump_rbtree, &cycle->config_dump_sentinel,
+                    ngx_str_rbtree_insert_value);
 
     if (old_cycle->open_files.part.nelts) {
         n = old_cycle->open_files.part.nelts;
@@ -166,16 +173,14 @@ ngx_init_cycle(ngx_cycle_t *old_cycle)
 
     n = old_cycle->listening.nelts ? old_cycle->listening.nelts : 10;
 
-    cycle->listening.elts = ngx_pcalloc(pool, n * sizeof(ngx_listening_t));
-    if (cycle->listening.elts == NULL) {
+    if (ngx_array_init(&cycle->listening, pool, n, sizeof(ngx_listening_t))
+        != NGX_OK)
+    {
         ngx_destroy_pool(pool);
         return NULL;
     }
 
-    cycle->listening.nelts = 0;
-    cycle->listening.size = sizeof(ngx_listening_t);
-    cycle->listening.nalloc = n;
-    cycle->listening.pool = pool;
+    ngx_memzero(cycle->listening.elts, n * sizeof(ngx_listening_t));
 
 
     ngx_queue_init(&cycle->reusable_connections_queue);
@@ -208,12 +213,18 @@ ngx_init_cycle(ngx_cycle_t *old_cycle)
     ngx_strlow(cycle->hostname.data, (u_char *) hostname, cycle->hostname.len);
 
 
-    for (i = 0; ngx_modules[i]; i++) {
-        if (ngx_modules[i]->type != NGX_CORE_MODULE) {
+    if (ngx_cycle_modules(cycle) != NGX_OK) {
+        ngx_destroy_pool(pool);
+        return NULL;
+    }
+
+
+    for (i = 0; cycle->modules[i]; i++) {
+        if (cycle->modules[i]->type != NGX_CORE_MODULE) {
             continue;
         }
 
-        module = ngx_modules[i]->ctx;
+        module = cycle->modules[i]->ctx;
 
         if (module->create_conf) {
             rv = module->create_conf(cycle);
@@ -221,7 +232,7 @@ ngx_init_cycle(ngx_cycle_t *old_cycle)
                 ngx_destroy_pool(pool);
                 return NULL;
             }
-            cycle->conf_ctx[ngx_modules[i]->index] = rv;
+            cycle->conf_ctx[cycle->modules[i]->index] = rv;
         }
     }
 
@@ -272,15 +283,16 @@ ngx_init_cycle(ngx_cycle_t *old_cycle)
                        cycle->conf_file.data);
     }
 
-    for (i = 0; ngx_modules[i]; i++) {
-        if (ngx_modules[i]->type != NGX_CORE_MODULE) {
+    for (i = 0; cycle->modules[i]; i++) {
+        if (cycle->modules[i]->type != NGX_CORE_MODULE) {
             continue;
         }
 
-        module = ngx_modules[i]->ctx;
+        module = cycle->modules[i]->ctx;
 
         if (module->init_conf) {
-            if (module->init_conf(cycle, cycle->conf_ctx[ngx_modules[i]->index])
+            if (module->init_conf(cycle,
+                                  cycle->conf_ctx[cycle->modules[i]->index])
                 == NGX_CONF_ERROR)
             {
                 environ = senv;
@@ -441,9 +453,13 @@ ngx_init_cycle(ngx_cycle_t *old_cycle)
             }
 
             if (shm_zone[i].tag == oshm_zone[n].tag
-                && shm_zone[i].shm.size == oshm_zone[n].shm.size)
+                && shm_zone[i].shm.size == oshm_zone[n].shm.size
+                && !shm_zone[i].noreuse)
             {
                 shm_zone[i].shm.addr = oshm_zone[n].shm.addr;
+#if (NGX_WIN32)
+                shm_zone[i].shm.handle = oshm_zone[n].shm.handle;
+#endif
 
                 if (shm_zone[i].init(&shm_zone[i], oshm_zone[n].data)
                     != NGX_OK)
@@ -490,6 +506,14 @@ ngx_init_cycle(ngx_cycle_t *old_cycle)
 
             for (i = 0; i < old_cycle->listening.nelts; i++) {
                 if (ls[i].ignore) {
+                    continue;
+                }
+
+                if (ls[i].remain) {
+                    continue;
+                }
+
+                if (ls[i].type != nls[n].type) {
                     continue;
                 }
 
@@ -540,6 +564,13 @@ ngx_init_cycle(ngx_cycle_t *old_cycle)
                         nls[n].add_deferred = 1;
                     }
 #endif
+
+#if (NGX_HAVE_REUSEPORT)
+                    if (nls[n].reuseport && !ls[i].reuseport) {
+                        nls[n].add_reuseport = 1;
+                    }
+#endif
+
                     break;
                 }
             }
@@ -593,13 +624,9 @@ ngx_init_cycle(ngx_cycle_t *old_cycle)
 
     pool->log = cycle->log;
 
-    for (i = 0; ngx_modules[i]; i++) {
-        if (ngx_modules[i]->init_module) {
-            if (ngx_modules[i]->init_module(cycle) != NGX_OK) {
-                /* fatal */
-                exit(1);
-            }
-        }
+    if (ngx_init_modules(cycle) != NGX_OK) {
+        /* fatal */
+        exit(1);
     }
 
 
@@ -721,19 +748,8 @@ old_shm_zone_done:
 
     if (ngx_process == NGX_PROCESS_MASTER || ngx_is_init_cycle(old_cycle)) {
 
-        /*
-         * perl_destruct() frees environ, if it is not the same as it was at
-         * perl_construct() time, therefore we save the previous cycle
-         * environment before ngx_conf_parse() where it will be changed.
-         */
-
-        env = environ;
-        environ = senv;
-
         ngx_destroy_pool(old_cycle->pool);
         cycle->old_cycle = NULL;
-
-        environ = env;
 
         return cycle;
     }
@@ -748,15 +764,15 @@ old_shm_zone_done:
         }
 
         n = 10;
-        ngx_old_cycles.elts = ngx_pcalloc(ngx_temp_pool,
-                                          n * sizeof(ngx_cycle_t *));
-        if (ngx_old_cycles.elts == NULL) {
+
+        if (ngx_array_init(&ngx_old_cycles, ngx_temp_pool, n,
+                           sizeof(ngx_cycle_t *))
+            != NGX_OK)
+        {
             exit(1);
         }
-        ngx_old_cycles.nelts = 0;
-        ngx_old_cycles.size = sizeof(ngx_cycle_t *);
-        ngx_old_cycles.nalloc = n;
-        ngx_old_cycles.pool = ngx_temp_pool;
+
+        ngx_memzero(ngx_old_cycles.elts, n * sizeof(ngx_cycle_t *));
 
         ngx_cleaner_event.handler = ngx_clean_old_cycles;
         ngx_cleaner_event.log = cycle->log;
@@ -863,6 +879,22 @@ ngx_init_zone_pool(ngx_cycle_t *cycle, ngx_shm_zone_t *zn)
             return NGX_OK;
         }
 
+#if (NGX_WIN32)
+
+        /* remap at the required address */
+
+        if (ngx_shm_remap(&zn->shm, sp->addr) != NGX_OK) {
+            return NGX_ERROR;
+        }
+
+        sp = (ngx_slab_pool_t *) zn->shm.addr;
+
+        if (sp == sp->addr) {
+            return NGX_OK;
+        }
+
+#endif
+
         ngx_log_error(NGX_LOG_EMERG, cycle->log, 0,
                       "shared zone \"%V\" has no equal addresses: %p vs %p",
                       &zn->shm.name, sp->addr, sp);
@@ -964,7 +996,7 @@ ngx_int_t
 ngx_signal_process(ngx_cycle_t *cycle, char *sig)
 {
     ssize_t           n;
-    ngx_int_t         pid;
+    ngx_pid_t         pid;
     ngx_file_t        file;
     ngx_core_conf_t  *ccf;
     u_char            buf[NGX_INT64_LEN + 2];
@@ -1002,7 +1034,7 @@ ngx_signal_process(ngx_cycle_t *cycle, char *sig)
 
     pid = ngx_atoi(buf, ++n);
 
-    if (pid == NGX_ERROR) {
+    if (pid == (ngx_pid_t) NGX_ERROR) {
         ngx_log_error(NGX_LOG_ERR, cycle->log, 0,
                       "invalid PID number \"%*s\" in \"%s\"",
                       n, buf, file.name.data);
@@ -1210,6 +1242,10 @@ ngx_shared_memory_add(ngx_conf_t *cf, ngx_str_t *name, size_t size, void *tag)
             return NULL;
         }
 
+        if (shm_zone[i].shm.size == 0) {
+            shm_zone[i].shm.size = size;
+        }
+
         if (size && size != shm_zone[i].shm.size) {
             ngx_conf_log_error(NGX_LOG_EMERG, cf, 0,
                             "the size %uz of shared memory zone \"%V\" "
@@ -1234,6 +1270,7 @@ ngx_shared_memory_add(ngx_conf_t *cf, ngx_str_t *name, size_t size, void *tag)
     shm_zone->shm.exists = 0;
     shm_zone->init = NULL;
     shm_zone->tag = tag;
+    shm_zone->noreuse = 0;
 
     return shm_zone;
 }
@@ -1266,7 +1303,7 @@ ngx_clean_old_cycles(ngx_event_t *ev)
             if (cycle[i]->connections[n].fd != (ngx_socket_t) -1) {
                 found = 1;
 
-                ngx_log_debug1(NGX_LOG_DEBUG_CORE, log, 0, "live fd:%d", n);
+                ngx_log_debug1(NGX_LOG_DEBUG_CORE, log, 0, "live fd:%ui", n);
 
                 break;
             }
@@ -1277,13 +1314,13 @@ ngx_clean_old_cycles(ngx_event_t *ev)
             continue;
         }
 
-        ngx_log_debug1(NGX_LOG_DEBUG_CORE, log, 0, "clean old cycle: %d", i);
+        ngx_log_debug1(NGX_LOG_DEBUG_CORE, log, 0, "clean old cycle: %ui", i);
 
         ngx_destroy_pool(cycle[i]->pool);
         cycle[i] = NULL;
     }
 
-    ngx_log_debug1(NGX_LOG_DEBUG_CORE, log, 0, "old cycles status: %d", live);
+    ngx_log_debug1(NGX_LOG_DEBUG_CORE, log, 0, "old cycles status: %ui", live);
 
     if (live) {
         ngx_add_timer(ev, 30000);
@@ -1292,5 +1329,56 @@ ngx_clean_old_cycles(ngx_event_t *ev)
         ngx_destroy_pool(ngx_temp_pool);
         ngx_temp_pool = NULL;
         ngx_old_cycles.nelts = 0;
+    }
+}
+
+
+void
+ngx_set_shutdown_timer(ngx_cycle_t *cycle)
+{
+    ngx_core_conf_t  *ccf;
+
+    ccf = (ngx_core_conf_t *) ngx_get_conf(cycle->conf_ctx, ngx_core_module);
+
+    if (ccf->shutdown_timeout) {
+        ngx_shutdown_event.handler = ngx_shutdown_timer_handler;
+        ngx_shutdown_event.data = cycle;
+        ngx_shutdown_event.log = cycle->log;
+        ngx_shutdown_event.cancelable = 1;
+
+        ngx_add_timer(&ngx_shutdown_event, ccf->shutdown_timeout);
+    }
+}
+
+
+static void
+ngx_shutdown_timer_handler(ngx_event_t *ev)
+{
+    ngx_uint_t         i;
+    ngx_cycle_t       *cycle;
+    ngx_connection_t  *c;
+
+    cycle = ev->data;
+
+    c = cycle->connections;
+
+    for (i = 0; i < cycle->connection_n; i++) {
+
+        if (c[i].fd == (ngx_socket_t) -1
+            || c[i].read == NULL
+            || c[i].read->accept
+            || c[i].read->channel
+            || c[i].read->resolver)
+        {
+            continue;
+        }
+
+        ngx_log_debug1(NGX_LOG_DEBUG_CORE, ev->log, 0,
+                       "*%uA shutdown timeout", c[i].number);
+
+        c[i].close = 1;
+        c[i].error = 1;
+
+        c[i].read->handler(c[i].read);
     }
 }
