@@ -27,6 +27,10 @@
 #define NGX_HTTP_V2 1
 #endif // !NGX_HTTP_V2
 
+#ifndef NGX_COMPAT
+#define NGX_COMPAT 1
+#endif // !NGX_COMPAT
+
 
 //#ifndef NGX_THREADS
 //#define NGX_THREADS  1
