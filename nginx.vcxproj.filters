@@ -94,6 +94,12 @@
     <Filter Include="Source Files\http\v2">
       <UniqueIdentifier>{8649891e-5525-497b-b43c-61a607313f08}</UniqueIdentifier>
     </Filter>
+    <Filter Include="Source Files\stream">
+      <UniqueIdentifier>{450964f0-cc1c-45be-b05c-2917baf75076}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Header Files\stream">
+      <UniqueIdentifier>{a877bde8-765c-4bf6-bfe3-563215db9d85}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ResourceCompile Include="src\os\win32\nginx.rc">
@@ -750,6 +756,75 @@
     <ClCompile Include="src\os\unix\ngx_udp_sendmsg_chain.c">
       <Filter>Source Files\os\unix</Filter>
     </ClCompile>
+    <ClCompile Include="src\stream\ngx_stream.c">
+      <Filter>Source Files\stream</Filter>
+    </ClCompile>
+    <ClCompile Include="src\stream\ngx_stream_access_module.c">
+      <Filter>Source Files\stream</Filter>
+    </ClCompile>
+    <ClCompile Include="src\stream\ngx_stream_core_module.c">
+      <Filter>Source Files\stream</Filter>
+    </ClCompile>
+    <ClCompile Include="src\stream\ngx_stream_geo_module.c">
+      <Filter>Source Files\stream</Filter>
+    </ClCompile>
+    <ClCompile Include="src\stream\ngx_stream_geoip_module.c">
+      <Filter>Source Files\stream</Filter>
+    </ClCompile>
+    <ClCompile Include="src\stream\ngx_stream_handler.c">
+      <Filter>Source Files\stream</Filter>
+    </ClCompile>
+    <ClCompile Include="src\stream\ngx_stream_limit_conn_module.c">
+      <Filter>Source Files\stream</Filter>
+    </ClCompile>
+    <ClCompile Include="src\stream\ngx_stream_log_module.c">
+      <Filter>Source Files\stream</Filter>
+    </ClCompile>
+    <ClCompile Include="src\stream\ngx_stream_map_module.c">
+      <Filter>Source Files\stream</Filter>
+    </ClCompile>
+    <ClCompile Include="src\stream\ngx_stream_proxy_module.c">
+      <Filter>Source Files\stream</Filter>
+    </ClCompile>
+    <ClCompile Include="src\stream\ngx_stream_realip_module.c">
+      <Filter>Source Files\stream</Filter>
+    </ClCompile>
+    <ClCompile Include="src\stream\ngx_stream_return_module.c">
+      <Filter>Source Files\stream</Filter>
+    </ClCompile>
+    <ClCompile Include="src\stream\ngx_stream_script.c">
+      <Filter>Source Files\stream</Filter>
+    </ClCompile>
+    <ClCompile Include="src\stream\ngx_stream_split_clients_module.c">
+      <Filter>Source Files\stream</Filter>
+    </ClCompile>
+    <ClCompile Include="src\stream\ngx_stream_ssl_module.c">
+      <Filter>Source Files\stream</Filter>
+    </ClCompile>
+    <ClCompile Include="src\stream\ngx_stream_ssl_preread_module.c">
+      <Filter>Source Files\stream</Filter>
+    </ClCompile>
+    <ClCompile Include="src\stream\ngx_stream_upstream.c">
+      <Filter>Source Files\stream</Filter>
+    </ClCompile>
+    <ClCompile Include="src\stream\ngx_stream_upstream_hash_module.c">
+      <Filter>Source Files\stream</Filter>
+    </ClCompile>
+    <ClCompile Include="src\stream\ngx_stream_upstream_least_conn_module.c">
+      <Filter>Source Files\stream</Filter>
+    </ClCompile>
+    <ClCompile Include="src\stream\ngx_stream_upstream_round_robin.c">
+      <Filter>Source Files\stream</Filter>
+    </ClCompile>
+    <ClCompile Include="src\stream\ngx_stream_upstream_zone_module.c">
+      <Filter>Source Files\stream</Filter>
+    </ClCompile>
+    <ClCompile Include="src\stream\ngx_stream_variables.c">
+      <Filter>Source Files\stream</Filter>
+    </ClCompile>
+    <ClCompile Include="src\stream\ngx_stream_write_filter_module.c">
+      <Filter>Source Files\stream</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="src\core\nginx.h">
@@ -1066,6 +1141,24 @@
     </ClInclude>
     <ClInclude Include="src\core\ngx_proxy_protocol.h">
       <Filter>Header Files\core</Filter>
+    </ClInclude>
+    <ClInclude Include="src\stream\ngx_stream.h">
+      <Filter>Header Files\stream</Filter>
+    </ClInclude>
+    <ClInclude Include="src\stream\ngx_stream_script.h">
+      <Filter>Header Files\stream</Filter>
+    </ClInclude>
+    <ClInclude Include="src\stream\ngx_stream_ssl_module.h">
+      <Filter>Header Files\stream</Filter>
+    </ClInclude>
+    <ClInclude Include="src\stream\ngx_stream_upstream.h">
+      <Filter>Header Files\stream</Filter>
+    </ClInclude>
+    <ClInclude Include="src\stream\ngx_stream_upstream_round_robin.h">
+      <Filter>Header Files\stream</Filter>
+    </ClInclude>
+    <ClInclude Include="src\stream\ngx_stream_variables.h">
+      <Filter>Header Files\stream</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>

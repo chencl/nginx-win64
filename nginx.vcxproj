@@ -120,7 +120,7 @@
       <RuntimeLibrary>MultiThreadedDLL</RuntimeLibrary>
       <WarningLevel>Level3</WarningLevel>
       <DebugInformationFormat>ProgramDatabase</DebugInformationFormat>
-      <AdditionalIncludeDirectories>.\auto;.\src\core;.\src\event;.\src\event\modules;.\src\http;.\src\http\modules;.\src\http\v2;.\src\http\modules\perl;C:\Perl64\lib\Core;.\src\mail;.\src\mysql;.\src\os\win32;D:\open_src\include;D:\open_src\include\gd;D:\open_src\include\pcre;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>.\auto;.\src\core;.\src\event;.\src\event\modules;.\src\http;.\src\http\modules;.\src\http\v2;.\src\http\modules\perl;C:\Perl64\lib\Core;.\src\mail;.\src\mysql;C:\d\open_src\nginx-win\src\stream;.\src\os\win32;D:\open_src\include;D:\open_src\include\gd;D:\open_src\include\pcre;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <MultiProcessorCompilation>true</MultiProcessorCompilation>
     </ClCompile>
     <Link>
@@ -488,6 +488,33 @@
     <ClCompile Include="src\os\win32\ngx_wsarecv_chain.c" />
     <ClCompile Include="src\os\win32\ngx_wsasend.c" />
     <ClCompile Include="src\os\win32\ngx_wsasend_chain.c" />
+    <ClCompile Include="src\stream\ngx_stream.c" />
+    <ClCompile Include="src\stream\ngx_stream_access_module.c" />
+    <ClCompile Include="src\stream\ngx_stream_core_module.c" />
+    <ClCompile Include="src\stream\ngx_stream_geoip_module.c">
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|x64'">true</ExcludedFromBuild>
+    </ClCompile>
+    <ClCompile Include="src\stream\ngx_stream_geo_module.c">
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|x64'">true</ExcludedFromBuild>
+    </ClCompile>
+    <ClCompile Include="src\stream\ngx_stream_handler.c" />
+    <ClCompile Include="src\stream\ngx_stream_limit_conn_module.c" />
+    <ClCompile Include="src\stream\ngx_stream_log_module.c" />
+    <ClCompile Include="src\stream\ngx_stream_map_module.c" />
+    <ClCompile Include="src\stream\ngx_stream_proxy_module.c" />
+    <ClCompile Include="src\stream\ngx_stream_realip_module.c" />
+    <ClCompile Include="src\stream\ngx_stream_return_module.c" />
+    <ClCompile Include="src\stream\ngx_stream_script.c" />
+    <ClCompile Include="src\stream\ngx_stream_split_clients_module.c" />
+    <ClCompile Include="src\stream\ngx_stream_ssl_module.c" />
+    <ClCompile Include="src\stream\ngx_stream_ssl_preread_module.c" />
+    <ClCompile Include="src\stream\ngx_stream_upstream.c" />
+    <ClCompile Include="src\stream\ngx_stream_upstream_hash_module.c" />
+    <ClCompile Include="src\stream\ngx_stream_upstream_least_conn_module.c" />
+    <ClCompile Include="src\stream\ngx_stream_upstream_round_robin.c" />
+    <ClCompile Include="src\stream\ngx_stream_upstream_zone_module.c" />
+    <ClCompile Include="src\stream\ngx_stream_variables.c" />
+    <ClCompile Include="src\stream\ngx_stream_write_filter_module.c" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="auto\ngx_auto_config.h" />
@@ -595,6 +622,12 @@
     <ClInclude Include="src\os\win32\ngx_user.h" />
     <ClInclude Include="src\os\win32\ngx_win32_config.h" />
     <ClInclude Include="src\os\win32\resource.h" />
+    <ClInclude Include="src\stream\ngx_stream.h" />
+    <ClInclude Include="src\stream\ngx_stream_script.h" />
+    <ClInclude Include="src\stream\ngx_stream_ssl_module.h" />
+    <ClInclude Include="src\stream\ngx_stream_upstream.h" />
+    <ClInclude Include="src\stream\ngx_stream_upstream_round_robin.h" />
+    <ClInclude Include="src\stream\ngx_stream_variables.h" />
   </ItemGroup>
   <ItemGroup>
     <Image Include="nginx.ico" />

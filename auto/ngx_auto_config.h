@@ -211,6 +211,14 @@
 #define NGX_SBIN_PATH  ""
 #endif
 
+#ifndef NGX_STREAM_SSL
+#define	NGX_STREAM_SSL 1
+#endif // !NGX_STREAM_SSL
+
+#ifndef NGX_STREAM_UPSTREAM_ZONE
+#define	NGX_STREAM_UPSTREAM_ZONE 1
+#endif // !NGX_STREAM_UPSTREAM_ZONE
+
 
 #ifndef NGX_CONF_PATH
 #define NGX_CONF_PATH  "conf\\nginx.conf"
